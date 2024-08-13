@@ -1,0 +1,29 @@
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: keda-metric-api-creds
+spec:
+  secretTargetRef:
+    - parameter: apiKey
+      name: worker-metrics-secret
+      key: subscriptionKey
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: worker-metrics-scaledobject
+spec:
+  maxReplicaCount: 10
+  scaleTargetRef:
+    name: workertest
+  triggers:
+  - type: metrics-api
+    metadata:
+      targetValue: "10"
+      url: "https://testapim.azure-api.net/Metrics"
+      valueLocation: 'currentValue'
+      authMode: "apiKey"
+      method: "header"
+      keyParamName: "Ocp-Apim-Subscription-Key"
+    authenticationRef:
+      name: keda-metric-api-creds
